@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nicebaby
+      POSTGRES_PASSWORD: nicebaby
+      POSTGRES_DB: nicebaby
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nicebaby"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-changeme}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://nicebaby:nicebaby@postgres:5432/nicebaby?schema=public}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && npm run start"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

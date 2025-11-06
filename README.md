@@ -15,7 +15,7 @@ Open http://localhost:3000 in your browser to explore the product blueprint.
 
 ## Environment Variables
 
-Create a `.env` file (or export the variables) before running the application:
+Create a `.env` file (or export the variables) before running the application locally or inside Docker:
 
 ```bash
 DATABASE_URL="postgresql://user:password@localhost:5432/nicebaby"
@@ -25,6 +25,40 @@ NEXTAUTH_URL="http://localhost:3000"
 
 `DATABASE_URL` should point to the PostgreSQL instance backing Prisma. `NEXTAUTH_SECRET` secures JWT sessions and should
 be a long, random string in production. `NEXTAUTH_URL` must reflect the public URL where the app is served.
+
+## Docker & Compose Workflow
+
+The repository ships with a multi-stage `Dockerfile` and `docker-compose.yml` for local development and production-like
+validation.
+
+1. Create a `.env` file (if you have not already) and populate at minimum `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, and
+   `DATABASE_URL`. For Compose, the default `DATABASE_URL` already points at the bundled Postgres container.
+2. Build and start the stack:
+
+   ```bash
+   docker compose up --build
+   ```
+
+   This launches:
+
+   - `web`: the Next.js application served from the production build. On start it runs `npx prisma migrate deploy` to
+     ensure the schema is current before executing `npm run start`.
+   - `postgres`: a persistent PostgreSQL 16 database seeded with credentials that match the default `DATABASE_URL`.
+
+3. Visit http://localhost:3000 to confirm the UI is available.
+4. When finished, stop the stack with `Ctrl+C`, then run `docker compose down` to shut down services (append
+   `--volumes` to clear the Postgres data volume).
+
+### Prisma inside containers
+
+Execute Prisma commands against the Compose services by running them within the `web` container:
+
+```bash
+docker compose run --rm web npx prisma migrate deploy
+docker compose run --rm web npx prisma db seed
+```
+
+These commands reuse the container's installed dependencies and networked database.
 
 ## Database & Prisma
 
@@ -111,4 +145,4 @@ entries). For JavaScript environments, rename the file to `seed.js` and swap the
 
 - Extend the new authentication and log APIs with UI components for recording daily activity.
 - Add dashboards, reminders, and background jobs based on the outlined modules.
-- Containerize the application with Docker Compose including database, worker, and reverse proxy services.
+- Expand Docker orchestration with workers, background jobs, and reverse proxy services as the platform grows.
