@@ -365,3 +365,22 @@ export function getDiaperStreak(minPerDay = 6): number {
   return calculateStreak(store.diapers, (entries) => entries.length >= minPerDay);
 }
 
+export function getSleepDurationSummary(days = 3): SummaryBucket[] {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  const sleeps = store.sleeps.filter((sleep) => new Date(sleep.loggedAt).getTime() >= cutoff);
+  const byDay = groupByDay(sleeps);
+  return Array.from(byDay.entries())
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .map(([day, items]) => ({
+      label: day,
+      value: Math.round(items.reduce((acc, item) => acc + item.durationMinutes, 0)),
+    }));
+}
+
+export function getSleepStreak(minMinutesPerDay = 12 * 60): number {
+  return calculateStreak(
+    store.sleeps,
+    (entries) => entries.reduce((total, entry) => total + entry.durationMinutes, 0) >= minMinutesPerDay,
+  );
+}
+

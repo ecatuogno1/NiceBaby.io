@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { addDiaperLog, addFeedingLog } from '@/lib/log-store';
+import { addDiaperLog, addFeedingLog, addSleepLog } from '@/lib/log-store';
 
 type FeedingPayload = {
   loggedAt: string;
@@ -14,6 +14,12 @@ type FeedingPayload = {
 type DiaperPayload = {
   loggedAt: string;
   type: 'wet' | 'dirty' | 'mixed';
+  note?: string;
+};
+
+type SleepPayload = {
+  loggedAt: string;
+  durationMinutes: number;
   note?: string;
 };
 
@@ -44,6 +50,17 @@ export async function createFeedingEntry(payload: FeedingPayload) {
 export async function createDiaperEntry(payload: DiaperPayload) {
   await addDiaperLog({
     ...payload,
+    loggedAt: sanitizeTimestamp(payload.loggedAt),
+    note: payload.note?.slice(0, 240),
+  });
+  revalidatePath('/logs');
+}
+
+export async function createSleepEntry(payload: SleepPayload) {
+  const duration = Math.max(1, Math.round(payload.durationMinutes));
+  await addSleepLog({
+    ...payload,
+    durationMinutes: duration,
     loggedAt: sanitizeTimestamp(payload.loggedAt),
     note: payload.note?.slice(0, 240),
   });

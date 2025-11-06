@@ -1,14 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import type { ReactNode } from 'react';
-import type { DiaperEntry, FeedingEntry } from '@/lib/log-store';
+import type { DiaperEntry, FeedingEntry, SleepEntry } from '@/lib/log-store';
 import { ActivityBarChart, type ActivityBarChartDatum } from '@/components/visualizations/activity-bar-chart';
 import { StreakCounter } from '@/components/visualizations/streak-counter';
 import { FeedQuickAdd, type FeedFormInput } from './feed-quick-add';
 import { DiaperQuickAdd, type DiaperFormInput } from './diaper-quick-add';
-import { createDiaperEntry, createFeedingEntry } from '@/app/(dashboard)/logs/actions';
+import { SleepQuickAdd, type SleepFormInput } from './sleep-quick-add';
+import { createDiaperEntry, createFeedingEntry, createSleepEntry } from '@/app/(dashboard)/logs/actions';
 
 const formatRelativeTime = (iso: string) => {
   const date = new Date(iso);
@@ -25,29 +26,54 @@ const formatRelativeTime = (iso: string) => {
 type DashboardLogsProps = {
   initialFeedings: FeedingEntry[];
   initialDiapers: DiaperEntry[];
+  initialSleeps: SleepEntry[];
   feedSummary: ActivityBarChartDatum[];
   diaperSummary: ActivityBarChartDatum[];
+  sleepSummary: ActivityBarChartDatum[];
   feedingStreak: number;
   diaperStreak: number;
+  sleepStreak: number;
 };
 
-type OptimisticEntry<T extends FeedingEntry | DiaperEntry> = T & { id: string };
+type OptimisticEntry<T extends FeedingEntry | DiaperEntry | SleepEntry> = T & { id: string };
 
 export function DashboardLogs({
   initialFeedings,
   initialDiapers,
+  initialSleeps,
   feedSummary,
   diaperSummary,
+  sleepSummary,
   feedingStreak,
   diaperStreak,
+  sleepStreak,
 }: DashboardLogsProps) {
   const router = useRouter();
   const [feedings, setFeedings] = useState(initialFeedings);
   const [diapers, setDiapers] = useState(initialDiapers);
+  const [sleeps, setSleeps] = useState(initialSleeps);
   const [feedError, setFeedError] = useState<string | null>(null);
   const [diaperError, setDiaperError] = useState<string | null>(null);
+  const [sleepError, setSleepError] = useState<string | null>(null);
   const [isFeedPending, startFeedTransition] = useTransition();
   const [isDiaperPending, startDiaperTransition] = useTransition();
+  const [isSleepPending, startSleepTransition] = useTransition();
+
+  useEffect(() => {
+    setFeedings(initialFeedings);
+  }, [initialFeedings]);
+
+  useEffect(() => {
+    setDiapers(initialDiapers);
+  }, [initialDiapers]);
+
+  useEffect(() => {
+    setSleeps(initialSleeps);
+  }, [initialSleeps]);
+
+  const refreshLogs = () => {
+    router.refresh();
+  };
 
   const handleFeedingSubmit = async (input: FeedFormInput) => {
     setFeedError(null);
@@ -60,14 +86,11 @@ export function DashboardLogs({
     setFeedings((entries) => [optimistic, ...entries].slice(0, 20));
     startFeedTransition(() => {
       createFeedingEntry(input)
-        .then(() => {
-          router.refresh();
-        })
         .catch((error) => {
           console.error('Failed to create feeding', error);
           setFeedError('Unable to save feeding right now. Please try again.');
-          router.refresh();
-        });
+        })
+        .finally(refreshLogs);
     });
   };
 
@@ -82,14 +105,30 @@ export function DashboardLogs({
     setDiapers((entries) => [optimistic, ...entries].slice(0, 20));
     startDiaperTransition(() => {
       createDiaperEntry(input)
-        .then(() => {
-          router.refresh();
-        })
         .catch((error) => {
           console.error('Failed to create diaper', error);
           setDiaperError('Unable to save diaper right now. Please try again.');
-          router.refresh();
-        });
+        })
+        .finally(refreshLogs);
+    });
+  };
+
+  const handleSleepSubmit = async (input: SleepFormInput) => {
+    setSleepError(null);
+    const optimistic: OptimisticEntry<SleepEntry> = {
+      id: `optimistic-${Date.now()}`,
+      module: 'sleep',
+      createdAt: Date.now(),
+      ...input,
+    };
+    setSleeps((entries) => [optimistic, ...entries].slice(0, 20));
+    startSleepTransition(() => {
+      createSleepEntry(input)
+        .catch((error) => {
+          console.error('Failed to create sleep', error);
+          setSleepError('Unable to save sleep right now. Please try again.');
+        })
+        .finally(refreshLogs);
     });
   };
 
@@ -103,11 +142,19 @@ export function DashboardLogs({
     return `${wetCount} wet diapers in the latest batch`;
   }, [diapers]);
 
+  const sleepInsight = useMemo(() => {
+    const totalMinutes = sleeps.reduce((sum, entry) => sum + entry.durationMinutes, 0);
+    const hours = totalMinutes / 60;
+    const formatted = hours >= 10 ? Math.round(hours).toString() : hours.toFixed(1).replace(/\.0$/, '');
+    return `${formatted} hours of rest tracked here`;
+  }, [sleeps]);
+
   return (
     <div className="space-y-10">
-      <section className="grid gap-6 lg:grid-cols-[2fr,2fr,1fr]">
+      <section className="grid gap-6 lg:grid-cols-2 xl:grid-cols-[2fr,2fr,2fr,1fr]">
         <FeedQuickAdd onSubmit={handleFeedingSubmit} isPending={isFeedPending} error={feedError} />
         <DiaperQuickAdd onSubmit={handleDiaperSubmit} isPending={isDiaperPending} error={diaperError} />
+        <SleepQuickAdd onSubmit={handleSleepSubmit} isPending={isSleepPending} error={sleepError} />
         <div className="flex flex-col gap-4">
           <StreakCounter
             label="Feeding streak"
@@ -121,15 +168,22 @@ export function DashboardLogs({
             target={7}
             description="Consistency helps spot hydration changes sooner"
           />
+          <StreakCounter
+            label="Sleep streak"
+            value={sleepStreak}
+            target={4}
+            description="Days meeting 12h combined rest"
+          />
         </div>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <ActivityBarChart title="Feeding minutes" data={feedSummary} valueUnit="min" />
         <ActivityBarChart title="Diaper changes" data={diaperSummary} valueUnit="changes" emphasis="muted" />
+        <ActivityBarChart title="Sleep duration" data={sleepSummary} valueUnit="min" />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <LogColumn title="Latest feedings" empty="No feedings yet" insight={feedingsInsight}>
           {feedings.map((entry) => (
             <LogCard key={entry.id} title={`${entry.side} • ${entry.durationMinutes} min`} timestamp={entry.loggedAt}>
@@ -143,6 +197,13 @@ export function DashboardLogs({
         <LogColumn title="Latest diapers" empty="No diaper changes yet" insight={diaperInsight}>
           {diapers.map((entry) => (
             <LogCard key={entry.id} title={`${entry.type} change`} timestamp={entry.loggedAt}>
+              {entry.note && <p className="text-xs text-slate-500">{entry.note}</p>}
+            </LogCard>
+          ))}
+        </LogColumn>
+        <LogColumn title="Latest sleeps" empty="No sleep logged yet" insight={sleepInsight}>
+          {sleeps.map((entry) => (
+            <LogCard key={entry.id} title={formatSleepDuration(entry.durationMinutes)} timestamp={entry.loggedAt}>
               {entry.note && <p className="text-xs text-slate-500">{entry.note}</p>}
             </LogCard>
           ))}
@@ -200,4 +261,17 @@ function LogCard({ title, timestamp, children }: LogCardProps) {
       </p>
     </article>
   );
+}
+
+function formatSleepDuration(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  const hoursLabel = `${hours} hr${hours === 1 ? '' : 's'}`;
+  if (remaining === 0) {
+    return hoursLabel;
+  }
+  return `${hoursLabel} ${remaining} min`;
 }

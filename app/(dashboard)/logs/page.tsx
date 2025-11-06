@@ -6,6 +6,9 @@ import {
   getFeedingsStreak,
   getRecentDiapers,
   getRecentFeedings,
+  getRecentSleeps,
+  getSleepDurationSummary,
+  getSleepStreak,
 } from '@/lib/log-store';
 
 export const metadata = {
@@ -14,12 +17,18 @@ export const metadata = {
 };
 
 export default async function LogsPage() {
-  const [feedings, diapers] = await Promise.all([getRecentFeedings(12), getRecentDiapers(12)]);
+  const [feedings, diapers, sleeps] = await Promise.all([
+    getRecentFeedings(12),
+    getRecentDiapers(12),
+    getRecentSleeps(12),
+  ]);
 
   const feedSummary = getFeedDurationSummary(4);
   const diaperSummary = getDiaperBreakdown(4);
+  const sleepSummary = getSleepDurationSummary(4);
   const feedingStreak = getFeedingsStreak();
   const diaperStreak = getDiaperStreak();
+  const sleepStreak = getSleepStreak();
 
   return (
     <div className="space-y-8">
@@ -35,10 +44,13 @@ export default async function LogsPage() {
       <DashboardLogs
         initialFeedings={feedings}
         initialDiapers={diapers}
+        initialSleeps={sleeps}
         feedSummary={feedSummary}
         diaperSummary={diaperSummary}
+        sleepSummary={sleepSummary}
         feedingStreak={feedingStreak}
         diaperStreak={diaperStreak}
+        sleepStreak={sleepStreak}
       />
     </div>
   );
