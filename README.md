@@ -1,8 +1,9 @@
 # NiceBaby.io
 
-A self-hosted newborn companion built with Next.js 14. This project scaffolds the front-end experience for tracking feeds,
-diapers, sleep, growth, medical appointments, and curated guidance for new parents. It also outlines the surrounding
-architecture for API services, data modeling, and Docker-based deployment.
+A privacy-first newborn tracker blueprint. The project outlines how to build **Baby Rhythm**—a collaborative, offline-first
+PWA that captures feeds, diapers, sleep, growth, medical records, and meaningful memories while keeping family data under
+your control. The UI scaffolding in this repo mirrors the product guide so design, engineering, and operations can stay
+aligned from MVP → v1.
 
 ## Getting Started
 
@@ -11,138 +12,57 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 in your browser to explore the product blueprint.
+Open http://localhost:3000 to browse the full implementation plan. No Docker or self-hosted stack is required; the site is
+a content prototype for the product direction.
 
-## Environment Variables
+## Implementation Guide Highlights
 
-Create a `.env` file (or export the variables) before running the application locally or inside Docker:
+### 1. Product Goals & Metrics
+- 1–2 tap logging even in sleep-deprived states.
+- Offline-first storage with optional encrypted sync.
+- Trustworthy insights that only alert when thresholds matter.
+- Success metrics: ≤5s to start core timers, ≥95% offline retention, <1 false nudge/day.
 
-```bash
-DATABASE_URL="postgresql://user:password@localhost:5432/nicebaby"
-NEXTAUTH_SECRET="$(openssl rand -hex 32)"
-NEXTAUTH_URL="http://localhost:3000"
-```
+### 2. Personas & Top Tasks
+- **Parent logger**: fast capture, “what’s next” radar, reassurance.
+- **Partner & helpers**: delegated access, shared routines, quick logging shortcuts.
+- **Pediatrician**: concise growth packet, exportable timeline, medication/vaccine summary.
 
-`DATABASE_URL` should point to the PostgreSQL instance backing Prisma. `NEXTAUTH_SECRET` secures JWT sessions and should
-be a long, random string in production. `NEXTAUTH_URL` must reflect the public URL where the app is served.
+### 3. Platforms & Architecture
+- PWA-first React/Preact client with Tailwind-style utilities.
+- IndexedDB/SQLite local store with append-only outbox queue.
+- Supabase/Postgres or Firebase/Firestore sync layer with encrypted blob storage.
+- n8n automations for digests, calendar sync, notifications, and packet lifecycles.
 
-## Docker & Compose Workflow
+### 4. Core Modules
+- Feeding, diaper, sleep, soothing, pumping, growth, medical, caregiver coordination, memories, guidance.
+- WHO/CDC LMS growth charts, anomaly detection, predictive nap windows, and encrypted document vault.
 
-The repository ships with a multi-stage `Dockerfile` and `docker-compose.yml` for local development and production-like
-validation.
+### 5. Offline & Sync Strategy
+- Outbox queue batches up to 50 operations per reconnect.
+- Conflict policies per entity (timer merges, history table for text).
+- Attachments stored with content-hash references and resume-safe uploads.
 
-1. Create a `.env` file (if you have not already) and populate at minimum `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, and
-   `DATABASE_URL`. For Compose, the default `DATABASE_URL` already points at the bundled Postgres container.
-2. Build and start the stack:
+### 6. Rules & Guidance
+- Sliding window rule engine (few wet diapers, long wake windows, asymmetric breast usage, medication windows).
+- Zod-validated `RuleThreshold` configs with sensitivity controls and quiet hours.
+- Contextual nudges with inline resources and caregiver-specific delivery channels.
 
-   ```bash
-   docker compose up --build
-   ```
+### 7. Security & Privacy
+- Local-only mode plus synced mode with per-family space keys and invite key wrap.
+- Roles (Owner/Parent/Helper/Viewer), passcode/biometric lock, audit log, encrypted exports.
+- PII minimization in pediatrician packets and medical-disclaimer guardrails.
 
-   This launches:
+### 8. Integrations & Automations
+- ICS export + optional CalDAV two-way sync for appointments.
+- n8n flows for 07:00 caregiver digests, rules webhooks, pediatrician packet links, and smart-home hooks.
+- Focused REST endpoints: `POST /outbox`, `GET /timeline`, `POST /pdf/doctor-packet`.
 
-   - `web`: the Next.js application served from the production build. On start it runs `npx prisma migrate deploy` to
-     ensure the schema is current before executing `npm run start`.
-   - `postgres`: a persistent PostgreSQL 16 database seeded with credentials that match the default `DATABASE_URL`.
+### 9. Roadmap & QA
+- **MVP (0–6 weeks)**: auth optional, single baby, core timers, offline queue, baseline insights, PDF packet.
+- **v1 (6–16 weeks)**: medical modules, caregiver invites with key wrap, memory timeline, predictive naps.
+- **Stretch**: full-entity E2EE, CalDAV two-way, multi-baby dashboard, OCR + on-device media intelligence.
+- QA checks: 48h offline logging, race conditions across caregivers, E2EE export/import, PWA + accessibility audits.
 
-3. Visit http://localhost:3000 to confirm the UI is available.
-4. When finished, stop the stack with `Ctrl+C`, then run `docker compose down` to shut down services (append
-   `--volumes` to clear the Postgres data volume).
-
-### Prisma inside containers
-
-Execute Prisma commands against the Compose services by running them within the `web` container:
-
-```bash
-docker compose run --rm web npx prisma migrate deploy
-docker compose run --rm web npx prisma db seed
-```
-
-These commands reuse the container's installed dependencies and networked database.
-
-## Database & Prisma
-
-Prisma is configured under `prisma/schema.prisma` with models for caregivers, babies, and the primary log tables. Helpful
-commands are exposed through `package.json` scripts:
-
-```bash
-# Apply schema changes locally (creates a new migration if needed)
-npm run prisma:migrate
-
-# Re-generate the Prisma client after editing the schema
-npm run prisma:generate
-
-# Apply existing migrations in production environments
-npm run prisma:deploy
-
-# Inspect and edit data visually
-npm run prisma:studio
-```
-
-The repository includes an initial migration at `prisma/migrations/0001_init/migration.sql` that provisions the schema
-for all caregivers, babies, and log tables.
-
-## Seeding Guidance
-
-To load starter caregivers, babies, or log entries, create a `prisma/seed.ts` script that hashes passwords with
-[`bcryptjs`](https://www.npmjs.com/package/bcryptjs) and inserts records via the Prisma client. Example outline:
-
-```ts
-// prisma/seed.ts
-import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcryptjs';
-
-const prisma = new PrismaClient();
-
-async function main() {
-  const passwordHash = await hash('changeme', 12);
-
-  const caregiver = await prisma.caregiver.upsert({
-    where: { email: 'caregiver@example.com' },
-    update: {},
-    create: {
-      email: 'caregiver@example.com',
-      name: 'Primary Caregiver',
-      passwordHash,
-      babies: {
-        create: {
-          name: 'Baby Doe',
-          birthDate: new Date('2024-01-01')
-        }
-      }
-    }
-  });
-
-  console.log('Seeded caregiver', caregiver.email);
-}
-
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
-```
-
-Then execute (after wiring a seed command in `package.json` such as `"prisma": { "seed": "ts-node prisma/seed.ts" }`):
-
-```bash
-npx prisma db seed
-```
-
-Adjust the script to suit production data-loading needs (multiple caregivers, cross-linked babies, and initial log
-entries). For JavaScript environments, rename the file to `seed.js` and swap the `import` statements for `require`.
-
-## Project Highlights
-
-- **Next.js App Router** foundation with typed routes and Tailwind CSS styling.
-- **Component-driven sections** that describe the core modules (tracking, playbooks, deployment) to guide future builds.
-- **Data blueprints** (`data/*.ts`) capturing roadmap items for backend, analytics, and self-hosting strategies.
-
-## Next Steps
-
-- Extend the new authentication and log APIs with UI components for recording daily activity.
-- Add dashboards, reminders, and background jobs based on the outlined modules.
-- Expand Docker orchestration with workers, background jobs, and reverse proxy services as the platform grows.
+For the full blueprint—including detailed data models, analytics dashboards, and pediatrician packet requirements—open the
+local site and explore each section.
