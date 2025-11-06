@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { DIAPER_TYPES, type DiaperType } from '@/lib/log-store';
 
 export type DiaperFormInput = {
   loggedAt: string;
-  type: 'WET' | 'DIRTY' | 'MIXED';
+  type: DiaperType;
   note?: string;
 };
 
@@ -15,11 +16,9 @@ type DiaperQuickAddProps = {
   error?: string | null;
 };
 
-const DIAPER_TYPES: DiaperFormInput['type'][] = ['WET', 'DIRTY', 'MIXED'];
-
 export function DiaperQuickAdd({ onSubmit, isPending = false, error }: DiaperQuickAddProps) {
   const [loggedAt, setLoggedAt] = useState(() => new Date().toISOString().slice(0, 16));
-  const [type, setType] = useState<DiaperFormInput['type']>('WET');
+  const [type, setType] = useState<DiaperType>('wet');
   const [note, setNote] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -39,7 +38,7 @@ export function DiaperQuickAdd({ onSubmit, isPending = false, error }: DiaperQui
     });
     setNote('');
     setLoggedAt(new Date().toISOString().slice(0, 16));
-    setType('WET');
+    setType('wet');
   };
 
   return (

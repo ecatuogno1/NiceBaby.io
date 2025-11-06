@@ -2,14 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { FeedMethod, FeedSide } from '@prisma/client';
+import { FEED_SIDES, type FeedSide } from '@/lib/log-store';
 
 export type FeedFormInput = {
   loggedAt: string;
-  method: FeedMethod;
   side: FeedSide;
   durationMinutes: number;
-  milliliters?: number;
+  ounces?: number;
   note?: string;
 };
 
@@ -19,13 +18,9 @@ type FeedQuickAddProps = {
   error?: string | null;
 };
 
-const METHOD_OPTIONS: FeedMethod[] = [FeedMethod.BREAST, FeedMethod.BOTTLE, FeedMethod.PUMPED, FeedMethod.SOLID];
-const SIDE_OPTIONS: FeedSide[] = [FeedSide.LEFT, FeedSide.RIGHT, FeedSide.BOTH];
-
 export function FeedQuickAdd({ onSubmit, isPending = false, error }: FeedQuickAddProps) {
   const [loggedAt, setLoggedAt] = useState(() => new Date().toISOString().slice(0, 16));
-  const [method, setMethod] = useState<FeedMethod>(FeedMethod.BREAST);
-  const [side, setSide] = useState<FeedSide>(FeedSide.LEFT);
+  const [side, setSide] = useState<FeedSide>('left');
   const [duration, setDuration] = useState('15');
   const [ounces, setOunces] = useState('');
   const [note, setNote] = useState('');
@@ -45,10 +40,9 @@ export function FeedQuickAdd({ onSubmit, isPending = false, error }: FeedQuickAd
     setLocalError(null);
     await onSubmit({
       loggedAt: new Date(loggedAt).toISOString(),
-      method,
       side,
       durationMinutes: Number(duration),
-      milliliters: ounces ? Number(ounces) * 29.5735 : undefined,
+      ounces: ounces ? Number(ounces) : undefined,
       note: note ? note.trim() : undefined,
     });
     setDuration('15');
@@ -75,15 +69,15 @@ export function FeedQuickAdd({ onSubmit, isPending = false, error }: FeedQuickAd
         />
       </label>
       <label className="flex flex-col gap-1 text-sm text-slate-200">
-        <span className="text-xs uppercase tracking-wide text-slate-400">Method</span>
+        <span className="text-xs uppercase tracking-wide text-slate-400">Feed side / method</span>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {METHOD_OPTIONS.map((option) => (
+          {FEED_SIDES.map((option) => (
             <button
               key={option}
               type="button"
-              onClick={() => setMethod(option)}
+              onClick={() => setSide(option)}
               className={`rounded-md border px-3 py-2 text-sm capitalize transition focus:outline-none focus:ring-2 focus:ring-sky-500/40 ${
-                method === option
+                side === option
                   ? 'border-sky-500 bg-sky-500/20 text-slate-50'
                   : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-600'
               }`}
@@ -93,27 +87,6 @@ export function FeedQuickAdd({ onSubmit, isPending = false, error }: FeedQuickAd
           ))}
         </div>
       </label>
-      {method === FeedMethod.BREAST && (
-        <label className="flex flex-col gap-1 text-sm text-slate-200">
-          <span className="text-xs uppercase tracking-wide text-slate-400">Side</span>
-          <div className="grid grid-cols-3 gap-2">
-            {SIDE_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setSide(option)}
-                className={`rounded-md border px-3 py-2 text-sm capitalize transition focus:outline-none focus:ring-2 focus:ring-sky-500/40 ${
-                  side === option
-                    ? 'border-sky-500 bg-sky-500/20 text-slate-50'
-                    : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-600'
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </label>
-      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm text-slate-200">
           <span className="text-xs uppercase tracking-wide text-slate-400">Duration (minutes)</span>
