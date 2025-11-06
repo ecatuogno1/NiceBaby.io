@@ -7,17 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "worker": "node scripts/worker.js",
-    "job": "node scripts/scheduled-job.js"
+
   },
   "dependencies": {
+    "@prisma/client": "5.13.0",
+    "bcryptjs": "2.4.3",
     "next": "14.2.3",
+    "next-auth": "5.0.0-beta.16",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "dotenv": "^16.4.5",
     "prom-client": "^15.1.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "2.4.6",
     "@types/node": "20.12.7",
     "@types/react": "18.2.24",
     "@types/react-dom": "18.2.11",
@@ -25,6 +28,7 @@
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.3",
     "postcss": "8.4.38",
+    "prisma": "5.13.0",
     "tailwindcss": "3.4.3",
     "typescript": "5.4.5"
   }
