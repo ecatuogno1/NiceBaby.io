@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model PlaybookArticle {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  summary     String
+  content     String
+  babyAgeMin  Int?
+  babyAgeMax  Int?
+  publishedAt DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  tags        ArticleTag[]
+  savedBy     SavedArticle[]
+  nudges      Nudge[]
+}
+
+model Tag {
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  articles  ArticleTag[]
+}
+
+model ArticleTag {
+  articleId String
+  tagId     String
+  assignedAt DateTime @default(now())
+
+  article PlaybookArticle @relation(fields: [articleId], references: [id])
+  tag     Tag             @relation(fields: [tagId], references: [id])
+
+  @@id([articleId, tagId])
+}
+
+model UserPreference {
+  id             String         @id @default(cuid())
+  userId         String         @unique
+  babyAgeMonths  Int?
+  sleepGoal      Int?
+  hydrationGoal  Int?
+  quietHours     String?
+  optInEmail     Boolean        @default(false)
+  optInPush      Boolean        @default(false)
+  optInMatrix    Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  savedArticles  SavedArticle[]
+  nudges         Nudge[]
+}
+
+model SavedArticle {
+  id            String          @id @default(cuid())
+  preferenceId  String
+  articleId     String
+  savedAt       DateTime        @default(now())
+
+  preference UserPreference @relation(fields: [preferenceId], references: [id])
+  article    PlaybookArticle @relation(fields: [articleId], references: [id])
+
+  @@unique([preferenceId, articleId])
+}
+
+model Nudge {
+  id            String        @id @default(cuid())
+  preferenceId  String
+  articleId     String?
+  channel       NudgeChannel
+  title         String
+  body          String
+  triggeredBy   String
+  status        NudgeStatus    @default(PENDING)
+  scheduledAt   DateTime?
+  createdAt     DateTime       @default(now())
+
+  preference UserPreference @relation(fields: [preferenceId], references: [id])
+  article    PlaybookArticle? @relation(fields: [articleId], references: [id])
+}
+
+enum NudgeChannel {
+  EMAIL
+  PUSH
+  MATRIX
+  IN_APP
+}
+
+enum NudgeStatus {
+  PENDING
+  SENT
+  SUPPRESSED
+}

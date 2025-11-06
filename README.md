@@ -24,3 +24,12 @@ Open http://localhost:3000 in your browser to explore the product blueprint.
 - Implement authentication, persistence (Prisma + PostgreSQL), and API route handlers for log management.
 - Add real tracking forms, dashboards, and background jobs based on the outlined modules.
 - Containerize the application with Docker Compose including database, worker, and reverse proxy services.
+
+## Playbook guidance module
+
+- Prisma models for `PlaybookArticle`, `Tag`, `UserPreference`, and `Nudge` provide persistence for authored content and
+  contextual notifications.
+- Seed starter content and demo preferences with `npm run prisma:db-push` followed by `npm run prisma:seed`.
+- Author long-form articles in `content/playbook/*.mdx` and run the seed to sync metadata, tags, and saved bookmarks.
+- Explore tailored recommendations at `/playbook` where filters surface content by age, tag, or saved status and toggle
+  opt-ins for email, web push, and Matrix deliveries.
