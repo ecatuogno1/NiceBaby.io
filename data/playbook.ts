@@ -2,24 +2,24 @@ import type { StackItem } from './tech-stack';
 
 export const playbookHighlights: StackItem[] = [
   {
-    title: 'Age-Based Guides',
+    title: 'Age-based guides',
     description:
-      'Curated MD-reviewed tips aligned with baby age and upcoming leaps, plus postpartum support checklists.',
+      '0–3 month soothing library, feeding troubleshooting, and postpartum support that stay cached for offline nights.',
     icon: '📚',
-    items: ['0-3 month soothing library', 'Feeding troubleshooting tree', 'Mom & dad recovery trackers']
+    items: ['Context by adjusted age', 'Printable cheat sheets', 'Postpartum recovery trackers']
   },
   {
-    title: 'Contextual Nudges',
+    title: 'Contextual nudges',
     description:
-      'Rules engine suggests timely advice when metrics deviate, like hydration reminders after few wet diapers.',
+      'Rules engine surfaces timely tips only when thresholds are crossed, with configurable sensitivity per family.',
     icon: '💡',
-    items: ['Zod validated thresholds', 'Configurable sensitivity', 'Slack/Matrix notifications']
+    items: ['Lamport-aware rule evaluation', 'Quiet hours & coalesced alerts', 'Learn-more paths with resources']
   },
   {
-    title: 'Resource Collections',
+    title: 'Resource collections',
     description:
-      'Bookmarkable guides, vetted external articles, and embedded videos for quick reference during night shifts.',
+      'Bookmarkable knowledge base, vetted references, and saved searches that sync privately across caregivers.',
     icon: '🧭',
-    items: ['Offline-first caching', 'Saved searches', 'Printable cheat sheets']
+    items: ['Offline cache & background refresh', 'Custom tags and filters', 'Shareable read-only packs']
   }
 ];

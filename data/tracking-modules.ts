@@ -4,43 +4,51 @@ export const trackingModules: StackItem[] = [
   {
     title: 'Feeding & Diaper Logs',
     description:
-      'Quick-add forms with timers for nursing sessions, bottle volumes, pump output, wet/dirty diaper classification, and anomaly detection.',
+      'One-tap timers, bottle presets, and diaper classifiers tuned for sleep-deprived parents with anomaly nudges.',
     icon: '🍼',
-    items: ['Offline-first queue for entries', 'Automated summaries per caregiver', 'Alerts when patterns drift']
+    items: [
+      'Side alternation + volume suggestions',
+      'Few wet diaper rule (24h window)',
+      '7am digest of totals & averages'
+    ]
   },
   {
     title: 'Sleep & Soothing',
     description:
-      'Start/stop timers for naps and nighttime sleep with soothing techniques tracked for correlation insights.',
+      'Start/stop sessions with soothing technique tags that power predictive wake windows and insight correlations.',
     icon: '😴',
-    items: ['Multi-device syncing', 'Noise machine + lighting integrations', 'Predictive nap recommendations']
+    items: [
+      'Timers survive app restarts',
+      'Integrate white-noise & lights',
+      'Insights on soothe-to-sleep success'
+    ]
   },
   {
     title: 'Growth Metrics',
     description:
-      'Weight, length, and head circumference capture with WHO percentile charts and milestone overlays.',
+      'WHO/CDC LMS data powers percentile charts, alerts on major band crossings, and milestone overlays.',
     icon: '📈',
-    items: ['WHO/CDC reference data import', 'Percentile calculators & alerts', 'Milestone streak visualizations']
+    items: ['Auto-calc Z scores', 'Alerts for >7% weight loss', '14-day stagnant growth flag']
   },
   {
     title: 'Medical & Vaccines',
     description:
-      'Appointment scheduler, vaccine checklist, and medication logs with secure document storage.',
+      'Age-based vaccine checklist, medication reminders with safety windows, and encrypted document vault.',
     icon: '🩺',
-    items: ['Calendar sync via CalDAV', 'Reminder notifications & snooze', 'Encrypted file vault for records']
+    items: ['ICS export + optional CalDAV', 'Dose reminders with snooze', 'Secure PDF/image storage']
   },
   {
     title: 'Caregiver Coordination',
     description:
-      'Role-based access for parents, relatives, and childcare helpers with activity feeds and checklists.',
+      'Roles, invites, and shared task boards keep everyone aligned while preserving audit trails.',
     icon: '🤝',
-    items: ['Delegated permissions', 'Activity digest emails', 'Shared task board for routines']
+    items: ['Owner/Parent/Helper/Viewer matrix', 'Activity feed per baby', 'Handoff checklists & notes']
   },
   {
     title: 'Memory Timeline',
     description:
-      'Capture milestones, journaling prompts, and media attachments to celebrate growth in context.',
+      'Prompted journaling and media capture woven into the daily log for keepsakes and contextual storytelling.',
     icon: '📸',
-    items: ['Smart tags & search', 'Private share links', 'Export to printed keepsake book']
+    items: ['Smart tags from event data', 'Private, time-limited share links', 'Printable keepsake export']
   }
 ];
