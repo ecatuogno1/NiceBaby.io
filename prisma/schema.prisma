@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FeedMethod {
+  BREAST
+  BOTTLE
+  PUMPED
+  SOLID
+}
+
+enum FeedSide {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+enum DiaperType {
+  WET
+  DIRTY
+  MIXED
+  DRY
+}
+
+enum StoolConsistency {
+  LOOSE
+  PASTY
+  FIRM
+}
+
+enum SleepQuality {
+  POOR
+  FAIR
+  GOOD
+  GREAT
+}
+
+enum BabySex {
+  FEMALE
+  MALE
+  UNKNOWN
+}
+
+model Caregiver {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  name          String?
+  passwordHash  String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  babies        Baby[]
+  feeds         FeedLog[]
+  diaperChanges DiaperLog[]
+  sleepSessions SleepLog[]
+  growthEntries GrowthLog[]
+}
+
+model Baby {
+  id            String      @id @default(cuid())
+  name          String
+  birthDate     DateTime?
+  dueDate       DateTime?
+  sex           BabySex?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  caregivers    Caregiver[]
+  feeds         FeedLog[]
+  diaperChanges DiaperLog[]
+  sleepSessions SleepLog[]
+  growthEntries GrowthLog[]
+}
+
+model FeedLog {
+  id           String      @id @default(cuid())
+  babyId       String
+  caregiverId  String?
+  startTime    DateTime
+  endTime      DateTime?
+  method       FeedMethod
+  volumeMl     Int?
+  side         FeedSide?
+  notes        String?
+  createdAt    DateTime    @default(now())
+
+  baby         Baby        @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  caregiver    Caregiver?  @relation(fields: [caregiverId], references: [id], onDelete: SetNull)
+
+  @@index([babyId, startTime])
+  @@index([caregiverId, startTime])
+}
+
+model DiaperLog {
+  id           String      @id @default(cuid())
+  babyId       String
+  caregiverId  String?
+  occurredAt   DateTime
+  type         DiaperType
+  color        String?
+  consistency  StoolConsistency?
+  notes        String?
+  createdAt    DateTime    @default(now())
+
+  baby         Baby        @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  caregiver    Caregiver?  @relation(fields: [caregiverId], references: [id], onDelete: SetNull)
+
+  @@index([babyId, occurredAt])
+  @@index([caregiverId, occurredAt])
+}
+
+model SleepLog {
+  id             String       @id @default(cuid())
+  babyId         String
+  caregiverId    String?
+  startTime      DateTime
+  endTime        DateTime?
+  durationMinutes Int?
+  quality        SleepQuality?
+  notes          String?
+  createdAt      DateTime     @default(now())
+
+  baby           Baby         @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  caregiver      Caregiver?   @relation(fields: [caregiverId], references: [id], onDelete: SetNull)
+
+  @@index([babyId, startTime])
+  @@index([caregiverId, startTime])
+}
+
+model GrowthLog {
+  id                    String   @id @default(cuid())
+  babyId                String
+  caregiverId           String?
+  recordedAt            DateTime
+  weightGrams           Int?
+  lengthCm              Float?
+  headCircumferenceCm   Float?
+  temperatureC          Float?
+  notes                 String?
+  createdAt             DateTime @default(now())
+
+  baby                  Baby      @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  caregiver             Caregiver? @relation(fields: [caregiverId], references: [id], onDelete: SetNull)
+
+  @@index([babyId, recordedAt])
+  @@index([caregiverId, recordedAt])
+}
