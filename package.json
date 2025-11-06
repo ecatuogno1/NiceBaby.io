@@ -6,12 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "worker": "node scripts/worker.js",
+    "job": "node scripts/scheduled-job.js"
   },
   "dependencies": {
     "next": "14.2.3",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "dotenv": "^16.4.5",
+    "prom-client": "^15.1.1"
   },
   "devDependencies": {
     "@types/node": "20.12.7",

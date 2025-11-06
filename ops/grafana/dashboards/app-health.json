@@ -1,0 +1,53 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP 2xx Responses",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{status=\"200\"}[5m]))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": ""
+          }
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Recent Application Logs",
+      "datasource": {
+        "type": "loki",
+        "uid": ""
+      },
+      "targets": [
+        {
+          "expr": "{container=\"app\"}"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      }
+    }
+  ],
+  "schemaVersion": 37,
+  "style": "dark",
+  "tags": ["app"],
+  "timezone": "",
+  "title": "Next.js Service Health",
+  "version": 1
+}

@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1.6
+
+ARG NODE_VERSION=20.12.2
+FROM node:${NODE_VERSION}-alpine AS base
+RUN apk add --no-cache libc6-compat bash
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json package-lock.json* pnpm-lock.yaml* bun.lockb* ./
+RUN \
+  if [ -f package-lock.json ]; then npm ci --omit=dev; \
+  elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install --frozen-lockfile --prod; \
+  elif [ -f bun.lockb ]; then npm install -g bun && bun install --frozen-lockfile --production; \
+  else npm install --omit=dev; fi
+
+FROM base AS runner
+ENV NODE_ENV=production
+RUN addgroup -g 1001 -S nodejs \
+  && adduser -S worker -G nodejs
+
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
+COPY scripts ./scripts
+
+USER worker
+CMD ["node", "scripts/worker.js"]
