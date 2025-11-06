@@ -7,16 +7,22 @@ type BaseEntry = {
   note?: string;
 };
 
+export const FEED_SIDES = ['left', 'right', 'both', 'bottle'] as const;
+export type FeedSide = (typeof FEED_SIDES)[number];
+
+export const DIAPER_TYPES = ['wet', 'dirty', 'mixed'] as const;
+export type DiaperType = (typeof DIAPER_TYPES)[number];
+
 export type FeedingEntry = BaseEntry & {
   module: 'feeding';
-  side: 'left' | 'right' | 'both' | 'bottle';
+  side: FeedSide;
   durationMinutes: number;
   ounces?: number;
 };
 
 export type DiaperEntry = BaseEntry & {
   module: 'diaper';
-  type: 'wet' | 'dirty' | 'mixed';
+  type: DiaperType;
 };
 
 export type SleepEntry = BaseEntry & {
@@ -172,14 +178,138 @@ export async function addSleepLog(entry: {
   return clone(record);
 }
 
-function groupByDay(entries: Entry[]): Map<string, Entry[]> {
-  const map = new Map<string, Entry[]>();
+function updateEntry<T extends Entry>(
+  entries: T[],
+  id: string,
+  mutator: (entry: T) => void,
+): T | null {
+  const entry = entries.find((item) => item.id === id);
+  if (!entry) {
+    return null;
+  }
+  mutator(entry);
+  return clone(entry);
+}
+
+function removeEntry<T extends Entry>(entries: T[], id: string): boolean {
+  const index = entries.findIndex((item) => item.id === id);
+  if (index === -1) {
+    return false;
+  }
+  entries.splice(index, 1);
+  return true;
+}
+
+export async function updateFeedingLog(
+  id: string,
+  updates: Partial<{
+    loggedAt: string;
+    side: FeedSide;
+    durationMinutes: number;
+    ounces: number | null | undefined;
+    note: string | null | undefined;
+  }>,
+): Promise<FeedingEntry | null> {
+  return updateEntry(store.feedings, id, (entry) => {
+    if (typeof updates.loggedAt === 'string') {
+      entry.loggedAt = updates.loggedAt;
+    }
+    if (updates.side) {
+      entry.side = updates.side;
+    }
+    if (typeof updates.durationMinutes === 'number') {
+      entry.durationMinutes = updates.durationMinutes;
+    }
+    if ('ounces' in updates) {
+      if (updates.ounces === null || updates.ounces === undefined) {
+        delete entry.ounces;
+      } else {
+        entry.ounces = updates.ounces;
+      }
+    }
+    if ('note' in updates) {
+      if (updates.note === null || updates.note === undefined) {
+        delete entry.note;
+      } else {
+        entry.note = updates.note;
+      }
+    }
+  });
+}
+
+export async function updateDiaperLog(
+  id: string,
+  updates: Partial<{
+    loggedAt: string;
+    type: DiaperType;
+    note: string | null | undefined;
+  }>,
+): Promise<DiaperEntry | null> {
+  return updateEntry(store.diapers, id, (entry) => {
+    if (typeof updates.loggedAt === 'string') {
+      entry.loggedAt = updates.loggedAt;
+    }
+    if (updates.type) {
+      entry.type = updates.type;
+    }
+    if ('note' in updates) {
+      if (updates.note === null || updates.note === undefined) {
+        delete entry.note;
+      } else {
+        entry.note = updates.note;
+      }
+    }
+  });
+}
+
+export async function updateSleepLog(
+  id: string,
+  updates: Partial<{
+    loggedAt: string;
+    durationMinutes: number;
+    note: string | null | undefined;
+  }>,
+): Promise<SleepEntry | null> {
+  return updateEntry(store.sleeps, id, (entry) => {
+    if (typeof updates.loggedAt === 'string') {
+      entry.loggedAt = updates.loggedAt;
+    }
+    if (typeof updates.durationMinutes === 'number') {
+      entry.durationMinutes = updates.durationMinutes;
+    }
+    if ('note' in updates) {
+      if (updates.note === null || updates.note === undefined) {
+        delete entry.note;
+      } else {
+        entry.note = updates.note;
+      }
+    }
+  });
+}
+
+export async function removeFeedingLog(id: string): Promise<boolean> {
+  return removeEntry(store.feedings, id);
+}
+
+export async function removeDiaperLog(id: string): Promise<boolean> {
+  return removeEntry(store.diapers, id);
+}
+
+export async function removeSleepLog(id: string): Promise<boolean> {
+  return removeEntry(store.sleeps, id);
+}
+
+function groupByDay<T extends Entry>(entries: T[]): Map<string, T[]> {
+  const map = new Map<string, T[]>();
   for (const entry of entries) {
     const date = new Date(entry.loggedAt);
     const key = date.toISOString().slice(0, 10);
-    const existing = map.get(key) ?? [];
-    existing.push(entry);
-    map.set(key, existing);
+    const existing = map.get(key);
+    if (existing) {
+      existing.push(entry);
+    } else {
+      map.set(key, [entry]);
+    }
   }
   return map;
 }
