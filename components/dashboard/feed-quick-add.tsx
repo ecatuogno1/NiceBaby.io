@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { FeedMethod, FeedSide } from '@prisma/client';
 
 export type FeedFormInput = {
   loggedAt: string;
-  side: 'left' | 'right' | 'both' | 'bottle';
+  method: FeedMethod;
+  side: FeedSide;
   durationMinutes: number;
-  ounces?: number;
+  milliliters?: number;
   note?: string;
 };
 
@@ -17,11 +19,13 @@ type FeedQuickAddProps = {
   error?: string | null;
 };
 
-const SIDE_OPTIONS: FeedFormInput['side'][] = ['left', 'right', 'both', 'bottle'];
+const METHOD_OPTIONS: FeedMethod[] = [FeedMethod.BREAST, FeedMethod.BOTTLE, FeedMethod.PUMPED, FeedMethod.SOLID];
+const SIDE_OPTIONS: FeedSide[] = [FeedSide.LEFT, FeedSide.RIGHT, FeedSide.BOTH];
 
 export function FeedQuickAdd({ onSubmit, isPending = false, error }: FeedQuickAddProps) {
   const [loggedAt, setLoggedAt] = useState(() => new Date().toISOString().slice(0, 16));
-  const [side, setSide] = useState<FeedFormInput['side']>('left');
+  const [method, setMethod] = useState<FeedMethod>(FeedMethod.BREAST);
+  const [side, setSide] = useState<FeedSide>(FeedSide.LEFT);
   const [duration, setDuration] = useState('15');
   const [ounces, setOunces] = useState('');
   const [note, setNote] = useState('');
@@ -41,9 +45,10 @@ export function FeedQuickAdd({ onSubmit, isPending = false, error }: FeedQuickAd
     setLocalError(null);
     await onSubmit({
       loggedAt: new Date(loggedAt).toISOString(),
+      method,
       side,
       durationMinutes: Number(duration),
-      ounces: ounces ? Number(ounces) : undefined,
+      milliliters: ounces ? Number(ounces) * 29.5735 : undefined,
       note: note ? note.trim() : undefined,
     });
     setDuration('15');
@@ -70,15 +75,15 @@ export function FeedQuickAdd({ onSubmit, isPending = false, error }: FeedQuickAd
         />
       </label>
       <label className="flex flex-col gap-1 text-sm text-slate-200">
-        <span className="text-xs uppercase tracking-wide text-slate-400">Side</span>
+        <span className="text-xs uppercase tracking-wide text-slate-400">Method</span>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {SIDE_OPTIONS.map((option) => (
+          {METHOD_OPTIONS.map((option) => (
             <button
               key={option}
               type="button"
-              onClick={() => setSide(option)}
+              onClick={() => setMethod(option)}
               className={`rounded-md border px-3 py-2 text-sm capitalize transition focus:outline-none focus:ring-2 focus:ring-sky-500/40 ${
-                side === option
+                method === option
                   ? 'border-sky-500 bg-sky-500/20 text-slate-50'
                   : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-600'
               }`}
@@ -88,6 +93,27 @@ export function FeedQuickAdd({ onSubmit, isPending = false, error }: FeedQuickAd
           ))}
         </div>
       </label>
+      {method === FeedMethod.BREAST && (
+        <label className="flex flex-col gap-1 text-sm text-slate-200">
+          <span className="text-xs uppercase tracking-wide text-slate-400">Side</span>
+          <div className="grid grid-cols-3 gap-2">
+            {SIDE_OPTIONS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setSide(option)}
+                className={`rounded-md border px-3 py-2 text-sm capitalize transition focus:outline-none focus:ring-2 focus:ring-sky-500/40 ${
+                  side === option
+                    ? 'border-sky-500 bg-sky-500/20 text-slate-50'
+                    : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-600'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </label>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm text-slate-200">
           <span className="text-xs uppercase tracking-wide text-slate-400">Duration (minutes)</span>

@@ -5,7 +5,7 @@ import type { FormEvent } from 'react';
 
 export type DiaperFormInput = {
   loggedAt: string;
-  type: 'wet' | 'dirty' | 'mixed';
+  type: 'WET' | 'DIRTY' | 'MIXED';
   note?: string;
 };
 
@@ -15,11 +15,11 @@ type DiaperQuickAddProps = {
   error?: string | null;
 };
 
-const DIAPER_TYPES: DiaperFormInput['type'][] = ['wet', 'dirty', 'mixed'];
+const DIAPER_TYPES: DiaperFormInput['type'][] = ['WET', 'DIRTY', 'MIXED'];
 
 export function DiaperQuickAdd({ onSubmit, isPending = false, error }: DiaperQuickAddProps) {
   const [loggedAt, setLoggedAt] = useState(() => new Date().toISOString().slice(0, 16));
-  const [type, setType] = useState<DiaperFormInput['type']>('wet');
+  const [type, setType] = useState<DiaperFormInput['type']>('WET');
   const [note, setNote] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -39,7 +39,7 @@ export function DiaperQuickAdd({ onSubmit, isPending = false, error }: DiaperQui
     });
     setNote('');
     setLoggedAt(new Date().toISOString().slice(0, 16));
-    setType('wet');
+    setType('WET');
   };
 
   return (
